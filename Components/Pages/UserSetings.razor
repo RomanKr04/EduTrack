@@ -1,0 +1,166 @@
+﻿@page "/account-settings"
+@using EduTrack.Models
+@using EduTrack.Services
+@rendermode InteractiveServer
+@inject UserService UserService
+@inject NavigationManager Navigation
+<PageTitle>Настройки учетной записи</PageTitle>
+
+<div class="dashboard-layout">
+    <nav class="dashboard-nav">
+        <div>
+            <a><NavLink href="/user-profile">Личный кабинет</NavLink></a>
+            <a><NavLink href="/account-settings">Настройки</NavLink></a>
+            <a><button @onclick="SignOut">Выйти</button></a>
+            <span></span>
+        </div>
+    </nav>
+</div>
+
+<h3>Настройки учетной записи</h3>
+
+@if (user == null)
+{
+    <p><em>Загрузка...</em></p>
+}
+else if (!UserStateService.IsAuthenticated)
+{
+    <p><em>Вы не аутентифицированы. Пожалуйста, войдите в систему.</em></p>
+}
+else
+{
+    <EditForm Model="user" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="username">Имя пользователя:</label>
+            <InputText id="username" class="form-control" @bind-Value="user.Username" />
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <InputText id="email" class="form-control" @bind-Value="user.Email" />
+        </div>
+
+        <div class="form-group">
+            <label for="firstname">Имя:</label>
+            <InputText id="firstname" class="form-control" @bind-Value="user.first_name" />
+        </div>
+
+        <div class="form-group">
+            <label for="lastname">Фамилия:</label>
+            <InputText id="lastname" class="form-control" @bind-Value="user.last_name" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+    </EditForm>
+}
+
+@code {
+    private Student user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        int userId = UserStateService.GetUserId();
+
+        if (userId == 0)
+        {
+            // Обработка неаутентифицированного пользователя
+        }
+        else
+        {
+            user = await UserService.GetUserByIdAsync(userId);
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await UserService.UpdateUserAsync(user);
+    }
+
+    private async Task SignOut()
+    {
+        await UserStateService.SignOutAsync();
+        Navigation.NavigateTo("/");
+    }
+}
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: url('/images/фон2.jpg') no-repeat center center fixed;
+        background-size: cover;
+    }
+
+    .dashboard-nav {
+        display: flex;
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-bottom: 1px solid #ccc;
+        font-size: 18px;
+        position: fixed;
+        width: 100%;
+        top: 0;
+        left: 255px;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+        .dashboard-nav div {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dashboard-nav a {
+            color: #007bff;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+            .dashboard-nav a:hover, .dashboard-nav button:hover {
+                color: #fff;
+                background-color: #007bff;
+                padding: 5px 15px;
+                border-radius: 5px;
+            }
+
+        .dashboard-nav button {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .btn {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+    }
+</style>

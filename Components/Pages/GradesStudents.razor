@@ -1,0 +1,134 @@
+﻿@page "/sgrades"
+@inject ISubmissionService SubmissionService
+@inject IGradeService GradeService
+@using EduTrack.Components.Models
+@using EduTrack.Models
+
+
+<h3>Ваши оценки</h3>
+
+@if (submissions == null)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">Загрузка...</span>
+        </div>
+        <p>Загрузка данных...</p>
+    </div>
+}
+else if (!submissions.Any())
+{
+    <p>У вас нет отправленных работ с оценками.</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Задание</th>
+                <th>Дата отправки</th>
+                <th>Оценка</th>
+                <th>Комментарий</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var submission in submissions)
+            {
+                <tr>
+                    <td>@submission.Assignment.AssignmentName</td>
+                    <td>@submission.SubmissionDate.ToShortDateString()</td>
+                    <td>
+                        @if (submission.Grade != null)
+                        {
+                            <span class="badge badge-success">@submission.Grade.GradeValue</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-warning">Оценка не выставлена</span>
+                        }
+                    </td>
+                    <td>
+                        @if (submission.Grade != null && !string.IsNullOrEmpty(submission.Grade.Comments))
+                        {
+                            @submission.Grade.Comments
+                        }
+                        else
+                        {
+                            <span>Комментарий не предоставлен</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<style>
+    .table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+    }
+
+        .table th, .table td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .table th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+    .badge-success {
+        background-color: #28a745;
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 12px;
+        font-size: 14px;
+    }
+
+    .badge-warning {
+        background-color: #ffc107;
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 12px;
+        font-size: 14px;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .text-center {
+        text-align: center;
+        margin-top: 20px;
+    }
+</style>
+
+@code {
+    private IEnumerable<Submission> submissions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userId = UserStateService.GetUserId();
+
+        // Загружаем все отправки для студента
+        submissions = await SubmissionService.GetSubmissionsByStudentIdAsync(userId);
+
+        // Дополнительно: Можно получить оценки и комментарии для каждой отправки
+        foreach (var submission in submissions)
+        {
+            if (submission.Grade == null)
+            {
+                submission.Grade = await GradeService.GetGradeBySubmissionIdAsync(submission.SubmissionId);
+            }
+        }
+    }
+}

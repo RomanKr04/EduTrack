@@ -1,0 +1,293 @@
+﻿@page "/courses"
+@rendermode InteractiveServer
+@inject ICourseService CourseService
+@inject IAuthService AuthService
+@inject UserStateService UserStateService
+@using EduTrack.Components.Models
+@using EduTrack.Models
+@using EduTrack.Services
+
+<h2 class="text-center mt-4">Управление курсами</h2>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <h3>Добавить курс</h3>
+            <EditForm Model="course" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label for="courseName" class="form-label">Название курса</label>
+                    <InputText id="courseName" class="form-control" @bind-Value="course.CourseName" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">Описание курса</label>
+                    <InputTextArea id="description" class="form-control" @bind-Value="course.Description" />
+                </div>
+                <div class="mb-3">
+                    <label for="joinCode" class="form-label">Код присоединения</label>
+                    <InputText id="joinCode" class="form-control" @bind-Value="course.JoinCode" readonly />
+                </div>
+
+                <button type="submit" class="btn btn-success w-100">Добавить курс</button>
+            </EditForm>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">@errorMessage</div>
+            }
+        </div>
+
+        <div class="col-md-6">
+            <h3>Список курсов</h3>
+            @if (courses != null && courses.Any())
+            {
+                <div class="row">
+                    @foreach (var course in courses)
+                    {
+                        var currentUser = UserStateService.GetCurrentUser();
+                        <div class="col-md-12 mb-3">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">@course.CourseName</h5>
+                                    <p class="card-text">@course.Description</p>
+                                    <p class="text-muted">Преподаватель: @currentUser.last_name @currentUser.first_name</p>
+                                    <button class="btn btn-info w-100 mt-3" @onclick="() => OpenCourseDetails(course)">Подробнее</button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">Курсы не найдены.</p>
+            }
+        </div>
+    </div>
+</div>
+
+@if (selectedCourse != null)
+{
+    <div class="modal" tabindex="-1" style="display: block; background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@selectedCourse.CourseName</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Описание:</strong> @selectedCourse.Description</p>
+                    <p><strong>Код для присоединения:</strong> @selectedCourse.JoinCode</p>
+                    <p><strong>Преподаватель:</strong> @currentUser.last_name @currentUser.first_name</p>
+                  
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private Course course = new Course();
+    private IEnumerable<Course> courses = Enumerable.Empty<Course>();
+    private string errorMessage;
+    private Student currentUser;
+    private Course selectedCourse;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            currentUser = await UserStateService.GetCurrentUserAsync();
+            if (currentUser == null)
+            {
+                errorMessage = "Не удалось получить данные текущего пользователя.";
+                return;
+            }
+
+            courses = await CourseService.GetCoursesByTeacherAsync(currentUser.Id);
+            course.JoinCode = GenerateJoinCode();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка при загрузке данных: {ex.Message}";
+        }
+    }
+    private string GenerateJoinCode()
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var random = new Random();
+        return new string(Enumerable.Repeat(chars, 8)
+            .Select(s => s[random.Next(s.Length)]).ToArray());
+    }
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(course.CourseName))
+            {
+                errorMessage = "Название курса не может быть пустым.";
+                return;
+            }
+
+            course.StudentId = currentUser.Id;
+            await CourseService.AddCourseAsync(course);
+
+            courses = await CourseService.GetCoursesByTeacherAsync(currentUser.Id);
+            course = new Course(); 
+            errorMessage = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка: {ex.Message}";
+        }
+    }
+
+    private void OpenCourseDetails(Course course)
+    {
+        selectedCourse = course;
+    }
+
+    private void CloseModal()
+    {
+        selectedCourse = null;
+    }
+}
+
+ <style>
+
+    body {
+        background-color: #f1f3f5; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    h2, h3 {
+        font-weight: bold;
+        color: #495057;
+    }
+
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease;
+        border: none;
+    }
+
+        .card:hover {
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+    .card-header {
+        font-size: 18px;
+        font-weight: 600;
+        background-color: #f8f9fa;
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        color: #343a40;
+        font-weight: 600;
+    }
+
+    .card-text {
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .text-muted {
+        font-size: 0.9rem;
+        color: #adb5bd !important;
+    }
+
+
+    .btn {
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+    .btn-info {
+        background-color: #28a745;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+
+        .btn-info:hover {
+            background-color: #17a2b8;
+        }
+
+    .btn:focus, .btn:active {
+        box-shadow: none;
+    }
+
+    /* Модальное окно */
+    .modal {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1050;
+    }
+
+    .modal-dialog {
+        margin: 10% auto;
+        max-width: 500px;
+    }
+
+    .modal-content {
+        background-color: #fff;
+        border-radius: 8px;
+        padding: 2rem;
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #dee2e6;
+    }
+
+    .mt-4, .mt-5 {
+        margin-top: 2rem !important;
+    }
+
+    .mb-3 {
+        margin-bottom: 1.5rem !important;
+    }
+
+    .text-center {
+        text-align: center !important;
+    }
+
+    .w-100 {
+        width: 100%;
+    }
+</style>
+ 

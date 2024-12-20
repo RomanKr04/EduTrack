@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Sign In/Up Form Transitions</title>
+    <link href="app.css" rel="stylesheet" />
+    <link href="CoureForStudents.razor.css" rel="stylesheet" />
+</head>
+<body>
+    <form>
+        <!-- Радио-кнопки для выбора действия -->
+        <input checked="" id="signin" name="action" type="radio" value="signin">
+        <label for="signin">Sign in</label>
+        <input id="signup" name="action" type="radio" value="signup">
+        <label for="signup">Sign up</label>
+        <input id="reset" name="action" type="radio" value="reset">
+        <label for="reset">Reset</label>
+
+        <!-- Основной контейнер формы -->
+        <div id="wrapper">
+            <div id="arrow"></div>
+            <input id="email" placeholder="Email" type="text">
+            <input id="pass" placeholder="Password" type="password">
+            <input id="repass" placeholder="Repeat password" type="password">
+        </div>
+
+        <!-- Кнопка отправки формы -->
+        <button type="submit">
+            <span>
+                Reset password
+                <br>
+                Sign in
+                <br>
+                Sign up
+            </span>
+        </button>
+    </form>
+
+    <!-- Подсказка -->
+    <div id="hint">Click on the tabs</div>
+</body>
+</html>

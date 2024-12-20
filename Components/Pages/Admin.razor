@@ -1,0 +1,112 @@
+﻿@page "/admin/usermanagement"
+
+
+@using EduTrack.Models
+@using Microsoft.EntityFrameworkCore
+@inject UserDbContext _dbContext
+@inject UserStateService UserStateService;
+
+<h1>Список зарегистрированных пользователей</h1>
+
+@if (users != null && users.Any())
+{
+    <h2>Преподаватели</h2>
+    @if (teachers.Any())
+    {
+        <div class="user-container">
+            @foreach (var user in teachers)
+            {
+                <div class="user-item">
+                    <h3>@user.Username</h3>
+                    <p>Email: @user.Email</p>
+                    <p>Имя: @user.first_name</p>
+                    <p>Фамилия: @user.last_name</p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>Преподаватели не найдены.</p>
+    }
+
+    <h2>Студенты</h2>
+    @if (students.Any())
+    {
+        <div class="user-container">
+            @foreach (var user in students)
+            {
+                
+                <div class="user-item">
+                    <h3>@user.Username</h3>
+                    <p>Email: @user.Email</p>
+                    <p>Имя: @user.first_name</p>
+                    <p>Фамилия: @user.last_name</p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <p>Студенты не найдены.</p>
+    }
+}
+else
+{
+    <p>Пользователи не найдены.</p>
+}
+
+@code {
+    private List<Student> users;
+    private List<Student> teachers;
+    private List<Student> students;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            users = await _dbContext.Users.ToListAsync();
+            teachers = users.Where(u => u.role == Enums.RoleTypes.Teacher).ToList();
+            students = users.Where(u => u.role == Enums.RoleTypes.Student).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load data: {ex.Message}");
+        }
+    }
+}
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: url('/images/фон2.jpg') no-repeat center center fixed;
+        background-size: cover;
+        font-family: Arial, sans-serif;
+        color: #333;
+    }
+
+    h1, h2, h3 {
+        color: #007bff;
+    }
+
+    .user-container {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .user-item {
+        width: calc(33.33% - 20px);
+        margin: 10px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+    }
+</style>

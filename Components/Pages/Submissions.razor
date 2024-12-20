@@ -1,0 +1,28 @@
+﻿@page "/add-submissions"
+@rendermode InteractiveServer
+@using EduTrack.Components.Models
+@using EduTrack.Models
+@using EduTrack.Services
+@using System.Linq
+@inject IAuthService AuthService
+@inject IDataService<Course> CourseDataService
+@inject IDataService<CourseAssignment> CourseAssignmentService
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Components
+
+@*
+	<h3 class="text-center mb-4">Прикрепить задание</h3>
+
+	<div class="d-flex flex-column" style="width: 100%; align-items: center;">
+		<input class="input-group" @bind-value="JoinCode" />
+		<button class="btn btn-primary" @onclick="HandleValidSubmit">Присоединиться к курсу</button>
+	</div>
+	<div>Мои курсы</div>
+	@if (_courseAssignments != null)
+	{
+		@foreach (var course in _courseAssignments)
+		{
+			<div @onclick="() => ToAss(course.CourseId)">@course.Course.CourseName</div>
+		}
+	}
+	*@

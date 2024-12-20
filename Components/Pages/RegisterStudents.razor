@@ -1,0 +1,81 @@
+﻿@page "/register/student"
+@using Microsoft.EntityFrameworkCore
+@using EduTrack.Models
+@using Microsoft.AspNetCore.Identity
+@rendermode InteractiveServer
+@inject IDbContextFactory<UserDbContext> _dbFactory
+@inject NavigationManager NavigationManager
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registration</title>
+    <link href="~/register.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="login-container">
+        <h2>Регистрация</h2>
+        <div class="form-group">
+            <label for="username">Логин</label>
+            <input type="text" class="form-control" placeholder="Логин" @bind="_newUser.Username" />
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" class="form-control" placeholder="Email" @bind="_newUser.Email" />
+        </div>
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <input type="password" class="form-control" placeholder="Пароль" @bind="_newUser.Password" />
+        </div>
+        <div class="form-group">
+            <label for="firstname">Имя</label>
+            <input type="firstname" class="form-control" placeholder="Имя" @bind="_newUser.first_name" />
+        </div>
+        <div class="form-group">
+            <label for="lastname">Фамилия</label>
+            <input type="lastname" class="form-control" placeholder="Фамилия" @bind="_newUser.last_name" />
+        </div>
+        <button class="btn btn-primary" @onclick="OnSaveClick">Завершить</button>
+    </div>
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger">@ErrorMessage</div>
+    }
+</body>
+</html>
+
+@code {
+    private Student _newUser = new Student();
+    private UserDbContext _db;
+    private string ErrorMessage;
+
+    protected override void OnInitialized()
+    {
+        _db = _dbFactory.CreateDbContext();
+    }
+
+    private async Task OnSaveClick()
+    {
+        try
+        {
+            _newUser.role = Enums.RoleTypes.Student;
+            var hasher = new PasswordHasher<Student>();
+            await _db.Users.AddAsync(_newUser);
+            await _db.SaveChangesAsync();
+            NavigationManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Произошла ошибка при регистрации: " + ex.Message;
+        }
+    }
+}<style>
+     body {
+         margin: 0;
+         padding: 0;
+         height: 100%;
+         background: url('/images/фон2.jpg') no-repeat center center fixed; 
+         background-size: cover;
+     }
+</style>

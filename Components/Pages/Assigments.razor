@@ -1,0 +1,194 @@
+﻿@page "/add-assignment"
+@rendermode InteractiveServer
+@using EduTrack.Components.Models
+@using EduTrack.Models
+@using EduTrack.Services
+@inject IDataService<Assignment> AssigDataService
+@inject IAssignmentService AssignmentService
+@inject ICourseService CourseService
+@inject IAuthService AuthService
+@inject UserStateService UserStateService
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Components
+
+<h3 class="text-center mb-4">Добавить задание</h3>
+
+@if (courses == null)
+{
+	<div class="text-center">
+		<div class="spinner-border" role="status">
+			<span class="sr-only">Загрузка...</span>
+		</div>
+		<p>Загрузка курсов...</p>
+	</div>
+}
+else
+{
+	<div class="card shadow-sm p-4">
+		<EditForm Model="assignment" OnValidSubmit="HandleValidSubmit">
+			<DataAnnotationsValidator />
+			<ValidationSummary />
+
+			<div class="form-group">
+				<label for="course">Курс</label>
+				<select class="form-control" id="course" @bind="assignment.CourseId">
+					<option value="" disabled selected>Выберите курс</option>
+					@foreach (var course in courses)
+					{
+						<option value="@course.CourseId">@course.CourseName</option>
+					}
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label for="assignmentName">Название задания</label>
+				<InputText id="assignmentName" class="form-control" @bind-Value="assignment.AssignmentName" />
+			</div>
+
+			<div class="form-group">
+				<label for="description">Описание задания</label>
+				<InputTextArea id="description" class="form-control" @bind-Value="assignment.Description" />
+			</div>
+
+			<div class="form-group">
+				<label for="dueDate">Срок выполнения</label>
+				<InputDate id="dueDate" class="form-control" @bind-Value="assignment.DueDate" />
+			</div>
+
+			<div class="form-group">
+				<label for="file">Прикрепить файл</label>
+				<InputFile id="file" OnChange="HandleFileSelected" />
+			</div>
+
+			<div class="d-flex justify-content-center">
+				<button type="submit" class="btn btn-success">
+					<i class="fas fa-check-circle"></i> Добавить задание
+				</button>
+			</div>
+		</EditForm>
+	</div>
+
+	<h3 class="mt-5">Существующие задания</h3>
+	<ul class="list-group">
+		@if (assignments != null)
+		{
+			foreach (var assignment in assignments)
+			{
+				<li class="list-group-item">
+					<strong>@assignment.AssignmentName</strong>
+					<br />
+					Курс: @assignment.Course.CourseName
+					<br />
+					Срок: @assignment.DueDate.ToShortDateString()
+					<br />
+					<NavLink class="btn btn-primary mt-2" href="@($"/teacher-submissions/{assignment.AssignmentId}")">
+						Просмотреть отправки
+					</NavLink>
+
+				</li>
+			}
+		}
+	</ul>
+}
+
+@if (isSuccess)
+{
+	<div class="toast align-items-center text-bg-success" role="alert" aria-live="assertive" aria-atomic="true">
+		<div class="d-flex">
+			<div class="toast-body">
+				Задание успешно добавлено!
+			</div>
+			<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+		</div>
+	</div>
+}
+
+@if (isError)
+{
+	<div class="toast align-items-center text-bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
+		<div class="d-flex">
+			<div class="toast-body">
+				Ошибка при добавлении задания. Пожалуйста, попробуйте снова.
+			</div>
+			<button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+		</div>
+	</div>
+}
+
+@code {
+	private Assignment assignment = new Assignment();
+	private IEnumerable<Assignment> assignments;
+	private IEnumerable<Course> courses;
+	private Student currentUser;
+	private bool isSuccess = false;
+	private bool isError = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			currentUser = await UserStateService.GetCurrentUserAsync();
+			if (currentUser == null)
+			{
+				throw new Exception("Не удалось получить текущего пользователя.");
+			}
+
+			courses = await CourseService.GetCoursesByTeacherAsync(currentUser.Id);
+			assignments = await AssignmentService.GetAssignmentsByTeacherAsync(currentUser.Id);
+		}
+		catch (Exception ex)
+		{
+			Console.Error.WriteLine($"Ошибка при загрузке данных: {ex.Message}");
+		}
+	}
+
+	private async Task HandleFileSelected(InputFileChangeEventArgs e)
+	{
+		try
+		{
+			var file = e.File;
+			if (file != null)
+			{
+				using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+				using var memoryStream = new MemoryStream();
+				await stream.CopyToAsync(memoryStream);
+
+				assignment.File = memoryStream.ToArray();
+				assignment.FileName = file.Name;
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.Error.WriteLine($"Ошибка при загрузке файла: {ex.Message}");
+		}
+	}
+
+	private async Task HandleValidSubmit()
+	{
+		try
+		{
+			assignment.DueDate = assignment.DueDate.ToUniversalTime();
+			await AssignmentService.AddAssignmentAsync(assignment);
+
+			assignments = await AssignmentService.GetAssignmentsByTeacherAsync(currentUser.Id);
+			assignment = new Assignment();
+
+			isSuccess = true;
+			isError = false;
+			StateHasChanged();
+			await Task.Delay(3000);
+			isSuccess = false;
+			StateHasChanged();
+		}
+		catch (Exception ex)
+		{
+			Console.Error.WriteLine($"Ошибка при добавлении задания: {ex.Message}");
+			isError = true;
+			isSuccess = false;
+			StateHasChanged();
+			await Task.Delay(3000);
+			isError = false;
+			StateHasChanged();
+		}
+	}
+}

@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+
+    <!-- Подключение Bootstrap из CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Ваши кастомные стили -->
+    <link href="css/styles.css" rel="stylesheet" />
+    <link href="~/app.css" rel="stylesheet" />
+
+    <link href="EduTrack.styles.css" rel="stylesheet" />
+    <link href="CoureForStudents.razor.css" rel="stylesheet" />
+
+    <!-- Подключение иконок Bootstrap (если нужно) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <!-- Иконка сайта -->
+    <link rel="icon" type="image/png" href="favicon.png" />
+
+    <!-- Компоненты HeadOutlet для Blazor -->
+    <HeadOutlet />
+</head>
+
+<body>
+    <Routes />
+
+    <!-- Подключение скриптов -->
+    <script src="js/JavaScript.js"></script>
+
+    <script src="_content/BlazorDownloadFile/BlazorDownloadFileScript.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="_framework/blazor.web.js"></script>
+    <script>
+        window.goBack = function () {
+            window.history.back();
+        };
+
+        window.showAlert = (message) => {
+            const toast = document.createElement("div");
+            toast.className = "toast";
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add("show");
+            }, 100);
+
+            setTimeout(() => {
+                toast.classList.remove("show");
+                toast.addEventListener("transitionend", () => {
+                    if (toast.parentElement) {
+                        toast.parentElement.removeChild(toast);
+                    }
+                });
+            }, 3000);
+        };
+    </script>
+
+</body>
+
+</html>

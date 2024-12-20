@@ -1,0 +1,155 @@
+﻿@page "/welcome"
+@using Microsoft.AspNetCore.Components
+@rendermode InteractiveServer
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Добро пожаловать в KgtuTracker!</h1>
+    <p class="text-center mb-4">Эта платформа предназначена для упрощения учебного процесса для студентов и преподавателей.</p>
+    <p class="text-center mb-4">Чтобы начать, пожалуйста, зарегистрируйтесь или войдите в систему.</p>
+    <div class="text-center">
+        <button class="btn btn-primary m-2" @onclick="ShowRoleModal">Регистрация</button>
+        <NavLink class="btn btn-secondary m-2" href="/login">Вход</NavLink>
+    </div>
+</div>
+
+@if (showRoleModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Выберите роль</h5>
+                    <button type="button" class="btn-close" @onclick="CloseRoleModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Выберите, в качестве кого вы хотите зарегистрироваться:</p>
+                    <div class="d-grid gap-2">
+                        <NavLink class="btn btn-primary" href="/register/student">
+                            <i class="fas fa-user-graduate me-2"></i> Студент
+                        </NavLink>
+                        <NavLink class="btn btn-primary" href="/register/teacher">
+                            <i class="fas fa-chalkboard-teacher me-2"></i> Преподаватель
+                        </NavLink>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .text-center {
+        text-align: center;
+    }
+
+    .m-2 {
+        margin: 0.5rem;
+    }
+
+    .modal {
+        display: block;
+    }
+
+    .modal-backdrop {
+        display: none;
+    }
+
+    .me-2 {
+        margin-right: 0.5rem;
+    }
+
+    .btn {
+        font-size: 1rem;
+        font-weight: bold;
+        padding: 10px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border: none;
+    }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            transform: scale(1.05);
+        }
+
+    .modal-dialog {
+        max-width: 500px;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+
+    .modal-header {
+        background-color: #007bff;
+        color: white;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+        padding: 15px;
+    }
+
+    .modal-title {
+        font-weight: bold;
+    }
+
+    .btn-close {
+        border: none;
+        background: transparent;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .modal-body {
+        padding: 20px;
+        text-align: center;
+    }
+
+    .d-grid {
+        gap: 1rem;
+    }
+
+    .modal-body i {
+        font-size: 1.2rem;
+    }
+
+    /* Custom styling for the page background */
+    body {
+        background-color: #f8f9fa;
+    }
+
+    h1 {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    p {
+        font-size: 1.1rem;
+    }
+</style>
+
+@code {
+    private bool showRoleModal = false;
+
+    private void ShowRoleModal()
+    {
+        showRoleModal = true;
+    }
+
+    private void CloseRoleModal()
+    {
+        showRoleModal = false;
+    }
+}

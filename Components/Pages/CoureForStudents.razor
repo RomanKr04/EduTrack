@@ -1,0 +1,251 @@
+﻿@page "/course"
+@rendermode InteractiveServer
+@inject IAuthService AuthService
+@inject IDataService<Course> CourseDataService
+@inject IDataService<CourseAssignment> CourseAssignmentService
+@inject IJSRuntime JS
+@inject UserStateService UserStateService
+@inject NavigationManager NavigationManager
+@using EduTrack.Models
+@using EduTrack.Components.Models
+@using Microsoft.EntityFrameworkCore
+
+<link href="AssigmentForStudent.razor.css" rel="stylesheet" />
+<div id="course-page">
+    <div class="container">
+        <h1>Ваши курсы</h1>
+        <div id="course-list">
+            @foreach (var courseAssignment in _courseAssignments)
+            {
+                <div class="course-item">
+                    <h2>@courseAssignment.Course.CourseName</h2>
+                    <p>@courseAssignment.Course.Description</p>
+                    <button class="remove-btn" @onclick="() => RemoveCourse(courseAssignment)">Удалить</button>
+                    <NavLink class="btn btn-secondary m-2" href="@($"/ass-for-students/{courseAssignment.Course.CourseId}")">Подробнее</NavLink>
+
+                </div>
+            }
+
+        </div>
+
+        <form class="join-form" @onsubmit="HandleValidSubmit">
+            <input type="text" @bind="JoinCode" placeholder="Введите код курса" class="input-field" required />
+            <button type="submit" class="join-btn">Присоединиться</button>
+        </form>
+    </div>
+</div>
+
+@code {
+    private string JoinCode;
+    private int currentUser;
+    private IEnumerable<CourseAssignment> _courseAssignments = new List<CourseAssignment>();
+    private LoadingPage _loadingPage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCourseAssignments();
+    }
+
+    private async Task LoadCourseAssignments()
+    {
+        try
+        {
+            _loadingPage?.Show();
+            currentUser = UserStateService.GetUserId();
+
+            _courseAssignments = await CourseAssignmentService.Query()
+                .Include(i => i.Course)
+                .Where(w => w.StudentId == currentUser)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Ошибка при загрузке курсов: {ex.Message}");
+            await JS.InvokeVoidAsync("showAlert", $"Ошибка при загрузке курсов: {ex.Message}");
+        }
+        finally
+        {
+            _loadingPage?.Hide();
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            _loadingPage?.Show();
+            await Task.Delay(1500);
+
+            var course = await CourseDataService.Query()
+                .FirstOrDefaultAsync(f => f.JoinCode == JoinCode);
+
+            if (course == null)
+            {
+                await JS.InvokeVoidAsync("showAlert", "Курс не найден!");
+                return;
+            }
+
+            var hasAssignment = await CourseAssignmentService.Query()
+                .AnyAsync(a => a.CourseId == course.CourseId && a.StudentId == currentUser);
+
+            if (hasAssignment)
+            {
+                await JS.InvokeVoidAsync("showAlert", "Курс уже присоединён!");
+                return;
+            }
+
+            await CourseAssignmentService.AddEntity(new CourseAssignment
+                {
+                    Course = course,
+                    StudentId = currentUser,
+                });
+
+            await JS.InvokeVoidAsync("showAlert", "Курс успешно присоединён!");
+            await LoadCourseAssignments();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Ошибка при присоединении к курсу: {ex.Message}");
+            await JS.InvokeVoidAsync("showAlert", $"Ошибка при присоединении к курсу: {ex.Message}");
+        }
+        finally
+        {
+            _loadingPage?.Hide();
+        }
+    }
+
+    private async Task RemoveCourse(CourseAssignment courseAssignment)
+    {
+        try
+        {
+            _loadingPage?.Show();
+            await Task.Delay(1500);
+
+            await CourseAssignmentService.RemoveEntity(courseAssignment);
+
+            await LoadCourseAssignments();
+            await JS.InvokeVoidAsync("showAlert", "Курс успешно удалён!");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Ошибка при удалении курса: {ex.Message}");
+            await JS.InvokeVoidAsync("showAlert", $"Ошибка при удалении курса: {ex.Message}");
+        }
+        finally
+        {
+            _loadingPage?.Hide();
+        }
+    }
+}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f5f5f5;
+    }
+
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+        font-size: 24px;
+        color: #333;
+    }
+
+    #course-list {
+        margin-top: 20px;
+    }
+
+    .course-item {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        background: #f9f9f9;
+        h2
+
+    {
+        font-size: 18px;
+        color: #444;
+    }
+
+    p {
+        font-size: 14px;
+        color: #666;
+    }
+
+    .remove-btn {
+        background-color: #ff4d4d;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 10px;
+        &:hover
+
+    {
+        background-color: #e64545;
+    }
+
+    }
+    }
+
+    .join-form {
+        margin-top: 20px;
+        .input-field
+
+    {
+        width: calc(100% - 32px);
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .join-btn {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        &:hover
+
+    {
+        background-color: #43a047;
+    }
+
+    }
+    }
+
+    .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 15px;
+        background: #4caf50;
+        color: white;
+        font-size: 14px;
+        border-radius: 5px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        &.show
+
+    {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>

@@ -1,0 +1,94 @@
+﻿<!-- Login.razor -->
+@page "/login"
+@rendermode InteractiveServer
+@using EduTrack.Models
+@using EduTrack.Services
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+
+<EditForm Model="loginModel">
+    <div class="login-container">
+        <h2>Вход в Личный Кабинет</h2>
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="email">Электронная почта</label>
+            <InputText id="email" @bind-Value="loginModel.Email" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <InputText id="password" @bind-Value="loginModel.Password" type="password" class="form-control" />
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-primary" @onclick="HandleLogin">Войти</button>
+        </div>
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger">@ErrorMessage</div>
+        }
+        <div class="form-links">
+            <a href="/forgot-password">Забыли пароль?</a>
+            <a href="/register">Регистрация</a>
+        </div>
+    </div>
+</EditForm>
+
+
+@code {
+    private LoginModel loginModel = new LoginModel();
+    private string ErrorMessage;
+
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender)
+    //     {
+    //         await UserStateService.InitUserStateAsync();
+
+    //         if (UserStateService.IsAuthenticated)
+    //             ToNextPage();
+    //     }
+    // }
+
+    private async Task HandleLogin()
+    {
+        var user = await AuthService.AuthenticateAsync(loginModel.Email, loginModel.Password);
+
+        if (user != null)
+        {
+            ToNextPage();
+        }
+        else
+        {
+            ErrorMessage = "Неверный пароль или email. Пожалуйста, попробуйте снова.";
+        }
+    }
+
+    private void ToNextPage()
+    {
+        if (UserStateService.IsAdmin)
+            NavigationManager.NavigateTo("/admin/usermanagement");
+        else
+            NavigationManager.NavigateTo("/user-profile");
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "Поле \"Электронная почта\" обязательно для заполнения")]
+        [EmailAddress(ErrorMessage = "Введите действительный адрес электронной почты")]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Поле \"Пароль\" обязательно для заполнения")]
+        public string Password { get; set; }
+    }
+}
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: url('/images/фон2.jpg') no-repeat center center fixed; /* Добавляем фоновое изображение */
+        background-size: cover;
+    }
+</style>

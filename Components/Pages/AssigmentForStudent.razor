@@ -1,0 +1,178 @@
+﻿@page "/ass-for-students/{CourseId:int}"
+@rendermode InteractiveServer
+@using EduTrack.Models
+@using EduTrack.Components.Models
+@using Microsoft.EntityFrameworkCore
+
+<link href="AssigmentForStudent.razor.css" rel="stylesheet" />
+
+<div class="custom-assignment-container">
+    <div class="page-title">Задания курса</div>
+
+    <LoadingPage @ref="_loadingPage">
+        @if (_assigments != null && _assigments.Any())
+        {
+            foreach (var ass in _assigments)
+            {
+                <div class="assignment-item">
+                    <div class="assignment-title">
+                        @ass.AssignmentName
+                    </div>
+
+                    <div class="assignment-description">
+                        <strong>Описание:</strong> @ass.Description
+                    </div>
+
+                    <div class="assignment-due-date">
+                        <strong>Дата сдачи:</strong> @ass.DueDate.ToString("dd MMM yyyy")
+                    </div>
+
+                    @if (ass?.File != null && ass.File.Length > 0)
+                    {
+                        <div class="download-button button" @onclick="() => DownLoadAssignmentFile(ass)">
+                            Скачать файл задания: @ass.FileName
+                        </div>
+                    }
+
+                    <div class="submission-status">
+                        Отправки
+                    </div>
+
+                    @{
+                        var sub = @_submissions.FirstOrDefault(f => f.AssignmentId == ass.AssignmentId);
+                    }
+
+                    <div class="submission-status">
+                        Статус: @sub?.Status
+                    </div>
+
+                    <div>
+                        @if (sub == null)
+                        {
+                            <div>
+                                <InputFile OnChange="f => OnFileChange(f, ass.AssignmentId)" />
+                            </div>
+                            @if (submission?.FileName != null)
+                            {
+                                <div class="button" @onclick="Save">
+                                    Сохранить
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            @if (sub?.File != null)
+                            {
+                                <div class="download-button button" @onclick="() => DownLoadFile(sub)">
+                                    Скачать файл работы: @sub.FileName
+                                </div>
+                            }
+
+                            @if (sub.Status == "Отправлено")
+                            {
+                                <div class="cancel-button button" @onclick="() => Cancel(sub)">
+                                    Отменить отправку
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="empty-state">Задания не найдены.</div>
+        }
+    </LoadingPage>
+</div>
+
+<style>
+    .custom-assignment-container {
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        font-family: Arial, sans-serif;
+    }
+
+    .page-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #333;
+        text-align: center;
+    }
+
+    .assignment-item {
+        padding: 15px;
+        margin-bottom: 20px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        transition: box-shadow 0.3s ease;
+    }
+
+        .assignment-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+    .assignment-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #555;
+    }
+
+    .assignment-description,
+    .assignment-due-date {
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .submission-status {
+        margin-bottom: 10px;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .button {
+        display: inline-block;
+        padding: 8px 15px;
+        font-size: 14px;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: center;
+        transition: background-color 0.3s ease;
+    }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+    .download-button {
+        background-color: #28a745;
+    }
+
+        .download-button:hover {
+            background-color: #218838;
+        }
+
+    .cancel-button {
+        background-color: #dc3545;
+    }
+
+        .cancel-button:hover {
+            background-color: #c82333;
+        }
+
+    .empty-state {
+        text-align: center;
+        font-size: 16px;
+        color: #999;
+        margin-top: 20px;
+    }
+</style>
