@@ -19,8 +19,7 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddAuthorization();
 
 
-var connectionString = "Server=localhost;Port=5432;Database=EduTrack;User ID=postgres;Password=446556;Include Error Detail=true";
-
+var connectionString = "Host=localhost;Port=5432;Database=EduTrack;Username=postgres;Password=4465";
 
 builder.Services.AddDbContextFactory<EduTrackContext>(opt => opt.UseNpgsql(connectionString));
 builder.Services.AddDbContextFactory<UserDbContext>(opt => opt.UseNpgsql(connectionString));
